@@ -1,8 +1,8 @@
-# Outbound Guard
+# Rspamd RCPTWatch
 
 **Recipient-diversity monitoring for authenticated SMTP submission using Rspamd Lua and Redis.**
 
-Outbound Guard watches how many *distinct SMTP envelope recipients* an authenticated submission account has contacted recently. Repeated forwarding to the same destination counts as one active recipient relationship, regardless of message volume. When an account exceeds a configured diversity threshold, Rspamd emits a zero-score alert and can send an administrator email using its existing `metadata_exporter` plugin.
+Rspamd RCPTWatch watches how many *distinct SMTP envelope recipients* an authenticated submission account has contacted recently. Repeated forwarding to the same destination counts as one active recipient relationship, regardless of message volume. When an account exceeds a configured diversity threshold, Rspamd emits a zero-score alert and can send an administrator email using its existing `metadata_exporter` plugin.
 
 The project is intended for mail administrators running Postfix + Rspamd. It is **observe-and-notify only**: no SMTP rejection, account locking or password resets. Its purpose is to complement conventional outgoing-message rate limits, not replace them for all abuse cases.
 
@@ -72,7 +72,7 @@ Note: `metrics` is a **short-lived, resetting aggregate** (TTL `window + 3600`, 
 rspamd/outbound_guard.lua               Rspamd callback and virtual symbols
 redis/record.lua                        Atomic Redis script, EVAL via Rspamd
 examples/outbound_guard.conf            Main settings, example local include
-examples/metadata_exporter-additions.conf  Standalone Outbound Guard selector/rule
+examples/metadata_exporter-additions.conf  Standalone Rspamd RCPTWatch selector/rule
 examples/groups.conf                    Zero-score symbol definitions
 prometheus/export_textfile.py           Optional one-shot metrics exporter
 requirements-metrics.txt                Optional redis-py dependency
@@ -125,7 +125,7 @@ All custom Rspamd files reside under `/etc/rspamd`, not distribution-managed `/u
 
    If your environment includes the section another way, do not duplicate it.
 
-4. **Merge** `examples/groups.conf` with your existing `/etc/rspamd/local.d/groups.conf` (do not overwrite other groups). All Outbound Guard symbols remain score `0.0`.
+4. **Merge** `examples/groups.conf` with your existing `/etc/rspamd/local.d/groups.conf` (do not overwrite other groups). All Rspamd RCPTWatch symbols remain score `0.0`.
 
 5. **Merge** the `outguard_alert` selector and `outguard_smtp` rule from `examples/metadata_exporter-additions.conf` into your current `/etc/rspamd/local.d/metadata_exporter.conf`. Preserve unrelated selectors and rules (such as `spamprobe_smtp`). Configure your own `smtp`, `mail_to`, and `mail_from` values. No external map or `multimap` rule is required: `OUTGUARD_ALERT` is emitted directly by this module, and the exporter uses `task:has_symbol('OUTGUARD_ALERT')`.
 
@@ -174,13 +174,13 @@ The direct mailer is non-durable: a failed SMTP transaction may lose a notificat
 
 ## Prometheus without a monitor daemon
 
-Outbound Guard increments aggregate counters in Redis as part of its atomic script. For environments with an existing exporter, integrate these four fields into it instead of running extra infrastructure. If Prometheus node_exporter's **textfile collector** is enabled, use the optional one-shot script on a timer or cron:
+Rspamd RCPTWatch increments aggregate counters in Redis as part of its atomic script. For environments with an existing exporter, integrate these four fields into it instead of running extra infrastructure. If Prometheus node_exporter's **textfile collector** is enabled, use the optional one-shot script on a timer or cron:
 
 ```sh
-python3 -m venv /opt/outbound-guard-venv
-/opt/outbound-guard-venv/bin/pip install -r requirements-metrics.txt
+python3 -m venv /opt/rspamd-rcptwatch-venv
+/opt/rspamd-rcptwatch-venv/bin/pip install -r requirements-metrics.txt
 OUTGUARD_REDIS_URL='redis://127.0.0.1:6379/0' \
-  /opt/outbound-guard-venv/bin/python prometheus/export_textfile.py \
+  /opt/rspamd-rcptwatch-venv/bin/python prometheus/export_textfile.py \
   --output /var/lib/node_exporter/textfile_collector/outguard.prom
 ```
 

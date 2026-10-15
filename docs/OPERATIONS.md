@@ -14,7 +14,7 @@ Only `outbound_guard.lua` belongs in `lua.local.d/`. **Do not** put Redis `recor
 
 `lua_redis.lua: use default Redis settings for outbound_guard` is expected when global Redis configuration is used. For authenticated submission, `rspamd_task_write_log` should contain a nonempty `user:`; absent `user` means no tracking.
 
-`FROM_WHITE` multimap can set a passthrough (`no action`), which ordinarily prevents callbacks; Outbound Guard uses `ignore_passthrough`. Rspamd `settings_id: white` with a fully skipped task may be a different scan of a reinjected mail, not submission. Check the MSA scan, not transit/reinjection scans.
+`FROM_WHITE` multimap can set a passthrough (`no action`), which ordinarily prevents callbacks; Rspamd RCPTWatch uses `ignore_passthrough`. Rspamd `settings_id: white` with a fully skipped task may be a different scan of a reinjected mail, not submission. Check the MSA scan, not transit/reinjection scans.
 
 ## Redis checks
 
